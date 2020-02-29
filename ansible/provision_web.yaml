@@ -1,0 +1,40 @@
+---
+- name: Provision Web Servers
+  hosts: webservers
+  tasks:
+
+    - name: Install pip3
+      apt:
+        update_cache: yes
+        name: python3-pip
+      become: yes
+
+    - name: Install python docker sdk
+      shell: |
+        pip3 install docker
+      become: yes
+
+    - name: Install docker
+      apt:
+        name: docker.io
+      become: yes
+
+    - name: Start Docker
+      shell: |
+        systemctl start docker
+        systemctl enable docker
+      become: yes
+
+    - name: Setup Docker Host for Remote Usage
+      lineinfile:
+        path: /lib/systemd/system/docker.service
+        state: present
+        regexp: '(ExecStart*.*)'
+        line: ExecStart=/usr/bin/dockerd -H fd:// -H tcp://0.0.0.0:2375
+      become: yes
+
+    - name: Reload the Daemon and Restart Docker
+      shell: |
+        systemctl daemon-reload
+        systemctl restart docker
+      become: yes
